@@ -1,3 +1,5 @@
+import set from 'lodash.set';
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
@@ -1029,7 +1031,6 @@ function initMixin(Vue) {
 
     // a flag to avoid this being observed
     vm._isVue = true;
-    console.log('_init   this.options', vm.constructor.options);
     options = mergeOptions(resolveConstructorOptions(vm.constructor), options, vm);
 
     delete options.mixins;
@@ -1745,8 +1746,13 @@ function handleProxy(event) {
   var dataset = currentTarget.dataset;
 
   var method = dataset[type];
+  var model = dataset['model'];
   var attr = dataset[type + 'Attr'] || [];
 
+  if (model && type == 'input' || type == 'change' || type == 'blur') {
+    // TODO 对于列表循环、计算属性不支持
+    set(this, model, event.detail.value);
+  }
   if (this[method]) {
     this[method].apply(this, attr.length > 0 ? attr.map(function (v) {
       return v == '$event' ? event : v;
@@ -1893,7 +1899,6 @@ var TuaPage = function TuaPage(_ref) {
       // 遍历递归观察 data
       bindData(this, data, observeDeep);
 
-      console.log('on load -- > computed --- > ', computed);
       // 遍历观察 computed
       bindComputed(this, computed, asyncSetData);
 
@@ -1939,14 +1944,15 @@ function Vue(options) {
   }
   this._init(options);
 
-  console.log('this =====>> ', this);
-  console.log('this.options =====>> ', this.options);
-  console.log('this.options.data =====>> ', this.options.data);
-  console.log('this.options.mounted =====>> ', this.options.computed);
+  // console.log('this =====>> ', this)
+  // console.log('this.options =====>> ', this.options)
+  // console.log('this.options.data =====>> ', this.options.data)
+  // console.log('this.options.mounted =====>> ', this.options.computed)
+
 
   // 执行小程序 Page、Component 方法
   if (this.options.type === 'page' || this.options.type === undefined) {
-    console.log('page instance ---- > ', TuaPage(this.options, this));
+    TuaPage(this.options, this);
   }
   if (this.options.type === 'component') {
     TuaComp(this.options, this);
@@ -1960,9 +1966,7 @@ initMixin(Vue);
 // console.log('utils --------- > ', utils, utils.toArray)
 
 function initUse(Vue) {
-  console.log('-----------initUse');
   Vue.use = function (plugin) {
-    console.log('-----------run Vue.use', this._installedPlugins);
 
     var installedPlugins = this._installedPlugins || (this._installedPlugins = []);
     if (installedPlugins.indexOf(plugin) > -1) {
@@ -1983,9 +1987,7 @@ function initUse(Vue) {
 }
 
 function initMixin$1(Vue) {
-  console.log('~~~~~~~~~ initMixin');
   Vue.mixin = function (mixin) {
-    console.log('~~~~~~~~~ run Vue.mixin', this.options);
     this.options = mergeOptions(this.options || {}, mixin);
     return this;
   };
