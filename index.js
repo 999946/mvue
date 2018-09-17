@@ -269,12 +269,8 @@ var logByType = function logByType(type) {
     return function () {
         var _console;
 
-        for (var _len = arguments.length, out = Array(_len), _key = 0; _key < _len; _key++) {
-            out[_key] = arguments[_key];
-        }
-
         /* istanbul ignore next */
-        (_console = console)[type].apply(_console, ['[TUA-MP]:'].concat(out));
+        (_console = console)[type].apply(_console, arguments);
     };
 };
 
