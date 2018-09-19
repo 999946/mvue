@@ -465,6 +465,8 @@ var getPropertiesFromProps = function getPropertiesFromProps(props) {
 };
 
 var hackSetData = function hackSetData(vm) {
+    if (vm.__setData__) return;
+
     var originalSetData = vm.setData;
 
     Object.defineProperties(vm, {
@@ -1289,9 +1291,11 @@ var VmStatus = function () {
 var vmStatus = new VmStatus();
 
 /**
- * 异步 setData 提高性能
+ * 异步 setData 提高性能 builder
  * @param {Page|Component} vm Page 或 Component 实例
  * @param {Object} watchObj 侦听器对象
+ *
+ * @return AsyncSetDataFn 异步 setData 提高性能方法
  * @param {String} path 属性的路径
  * @param {any} newVal 新值
  * @param {any} oldVal 旧值
@@ -1436,13 +1440,14 @@ var Dep = function () {
 
 Dep.targetCb = null;
 
-var addSubDeep = function addSubDeep(_ref) {
+var addSubDeep = function addSubDeep(_ref, k) {
     var obj = _ref.obj,
         targetCb = _ref.targetCb;
 
+
     if (Array.isArray(obj)) {
         obj.map(function (item) {
-            item[__dep__] && item[__dep__].addSub(targetCb);
+            item && item[__dep__] && item[__dep__].addSub(targetCb);
             return item;
         }).map(function (obj) {
             return { obj: obj, targetCb: targetCb };
@@ -1450,10 +1455,10 @@ var addSubDeep = function addSubDeep(_ref) {
         return;
     }
 
-    if ((typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object') {
+    if (obj !== null && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object') {
         Object.keys(obj).map(function (key) {
             var item = obj[key];
-            item[__dep__] && item[__dep__].addSub(targetCb);
+            item && item[__dep__] && item[__dep__].addSub(targetCb);
             return key;
         }).map(function (key) {
             return { obj: obj[key], targetCb: targetCb };
