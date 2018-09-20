@@ -77,12 +77,6 @@ var objectWithoutProperties = function (obj, keys) {
  * @param {Object} detail 自定义事件所携带的数据
  * @param {Object} currentTarget 当前组件的一些属性值集合
  */
-var getValFromEvent = function getValFromEvent(_ref) {
-    var detail = _ref.detail,
-        _ref$currentTarget = _ref.currentTarget,
-        currentTarget = _ref$currentTarget === undefined ? {} : _ref$currentTarget;
-    return _extends({}, detail, currentTarget.dataset);
-};
 
 /**
  * 封装小程序原生的 triggerEvent 方法，
@@ -91,10 +85,11 @@ var getValFromEvent = function getValFromEvent(_ref) {
  * @param {Object} options 小程序原生触发事件的选项
  */
 var $emit = function $emit(eventName) {
-    var event = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    var options = arguments[2];
+  var detail = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { __emit: true };
+  var options = arguments[2];
 
-    this.triggerEvent(eventName, getValFromEvent(event), options);
+  detail['__emit'] = true;
+  this.triggerEvent(eventName, detail, options);
 };
 
 // 小程序内部属性的判断正则
@@ -1743,8 +1738,12 @@ var triggerImmediateWatch = function triggerImmediateWatch(vm, watch) {
 
 function handleProxy(event) {
   var type = event.type,
-      currentTarget = event.currentTarget;
-  var dataset = currentTarget.dataset;
+      currentTarget = event.currentTarget,
+      target = event.target,
+      detail = event.detail;
+
+  var _ref = currentTarget || target,
+      dataset = _ref.dataset;
 
   var method = dataset[type];
   var model = dataset['model'];
@@ -1755,9 +1754,12 @@ function handleProxy(event) {
     set(this, model, event.detail.value);
   }
   if (this[method]) {
-    this[method].apply(this, attr.length > 0 ? attr.map(function (v) {
-      return v == '$event' ? event : v;
-    }) : [event]);
+    var payload = detail && Object.keys(detail).length > 0 && detail['__emit'] ? detail : event;
+    delete payload['__emit'];
+    var args = attr.length > 0 ? attr.map(function (v) {
+      return v == '$event' ? payload : v;
+    }) : [payload];
+    this[method].apply(this, args);
   } else {
     warn$1('does not have a method "' + method + '"');
   }
