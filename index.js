@@ -72,11 +72,50 @@ var objectWithoutProperties = function (obj, keys) {
 };
 
 /**
- * 取出并合并常用的 detail 和 dataset 上的值
- * 方便业务代码获取需要的数据
- * @param {Object} detail 自定义事件所携带的数据
- * @param {Object} currentTarget 当前组件的一些属性值集合
+ * Make a map and return a function for checking if a key
+ * is in that map.
  */
+function makeMap(str, expectsLowerCase) {
+    var map = Object.create(null);
+    var list = str.split(',');
+    for (var i = 0; i < list.length; i++) {
+        map[list[i]] = true;
+    }
+    return expectsLowerCase ? function (val) {
+        return map[val.toLowerCase()];
+    } : function (val) {
+        return map[val];
+    };
+}
+
+/**
+ * Check if a tag is a built-in tag.
+ */
+var isBuiltInTag = makeMap('slot,component', true);
+
+/**
+ * Check if a attribute is a reserved attribute.
+ */
+var isReservedAttribute = makeMap('key,ref,slot,is');
+
+/**
+ * Create a cached version of a pure function.
+ */
+function cached(fn) {
+    var cache = Object.create(null);
+    return function cachedFn(str) {
+        var hit = cache[str];
+        return hit || (cache[str] = fn(str));
+    };
+}
+
+/**
+ * Hyphenate a camelCase string.
+ */
+var hyphenateRE = /([^-])([A-Z])/g;
+var hyphenate = cached(function (str) {
+    return str.replace(hyphenateRE, '$1-$2').replace(hyphenateRE, '$1-$2').toLowerCase();
+});
 
 /**
  * 封装小程序原生的 triggerEvent 方法，
@@ -84,12 +123,11 @@ var objectWithoutProperties = function (obj, keys) {
  * @param {Event} event 小程序原生事件
  * @param {Object} options 小程序原生触发事件的选项
  */
-var $emit = function $emit(eventName) {
-  var detail = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { __emit: true };
-  var options = arguments[2];
-
-  detail['__emit'] = true;
-  this.triggerEvent(eventName, detail, options);
+var $emit = function $emit(eventName, detail, options) {
+  this.triggerEvent(hyphenate(eventName), {
+    __emit: true,
+    detail: detail
+  }, options);
 };
 
 // 小程序内部属性的判断正则
@@ -103,7 +141,7 @@ var COMMON_PROP = {
     configurable: true
 };
 
-var _toString = Object.prototype.toString;
+var _toString$1 = Object.prototype.toString;
 
 // 每个对象上挂载自己路径前缀的 key
 var __TUA_PATH__ = '__TUA_PATH__';
@@ -127,11 +165,11 @@ var isNotInnerAttr = function isNotInnerAttr(key) {
 };
 
 var toRawType = function toRawType(value) {
-    return _toString.call(value).slice(8, -1);
+    return _toString$1.call(value).slice(8, -1);
 };
 
-var isPlainObject = function isPlainObject(value) {
-    return _toString.call(value) === '[object Object]';
+var isPlainObject$1 = function isPlainObject(value) {
+    return _toString$1.call(value) === '[object Object]';
 };
 
 // 根据路径前缀和 key 得到当前路径
@@ -245,7 +283,7 @@ var assertType = function assertType(value, type) {
             valid = value instanceof type;
         }
     } else if (expectedType === 'Object') {
-        valid = isPlainObject(value);
+        valid = isPlainObject$1(value);
     } else if (expectedType === 'Array') {
         valid = Array.isArray(value);
     } else {
@@ -493,25 +531,25 @@ var emptyObject = Object.freeze({});
 /**
  * Get the raw type string of a value e.g. [object Object]
  */
-var _toString$1 = Object.prototype.toString;
+var _toString$2 = Object.prototype.toString;
 
 function toRawType$1(value) {
-  return _toString$1.call(value).slice(8, -1);
+  return _toString$2.call(value).slice(8, -1);
 }
 
 /**
  * Strict object type check. Only returns true
  * for plain JavaScript objects.
  */
-function isPlainObject$1(obj) {
-  return _toString$1.call(obj) === '[object Object]';
+function isPlainObject$2(obj) {
+  return _toString$2.call(obj) === '[object Object]';
 }
 
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
  */
-function makeMap(str, expectsLowerCase) {
+function makeMap$1(str, expectsLowerCase) {
   var map = Object.create(null);
   var list = str.split(',');
   for (var i = 0; i < list.length; i++) {
@@ -527,25 +565,25 @@ function makeMap(str, expectsLowerCase) {
 /**
  * Check if a tag is a built-in tag.
  */
-var isBuiltInTag = makeMap('slot,component', true);
+var isBuiltInTag$1 = makeMap$1('slot,component', true);
 
 /**
  * Check if a attribute is a reserved attribute.
  */
-var isReservedAttribute = makeMap('key,ref,slot,slot-scope,is');
+var isReservedAttribute$1 = makeMap$1('key,ref,slot,slot-scope,is');
 
 /**
  * Check whether the object has the property.
  */
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-function hasOwn(obj, key) {
-  return hasOwnProperty.call(obj, key);
+var hasOwnProperty$1 = Object.prototype.hasOwnProperty;
+function hasOwn$1(obj, key) {
+  return hasOwnProperty$1.call(obj, key);
 }
 
 /**
  * Create a cached version of a pure function.
  */
-function cached(fn) {
+function cached$1(fn) {
   var cache = Object.create(null);
   return function cachedFn(str) {
     var hit = cache[str];
@@ -556,9 +594,9 @@ function cached(fn) {
 /**
  * Camelize a hyphen-delimited string.
  */
-var camelizeRE = /-(\w)/g;
-var camelize = cached(function (str) {
-  return str.replace(camelizeRE, function (_, c) {
+var camelizeRE$1 = /-(\w)/g;
+var camelize$1 = cached$1(function (str) {
+  return str.replace(camelizeRE$1, function (_, c) {
     return c ? c.toUpperCase() : '';
   });
 });
@@ -586,12 +624,12 @@ function nativeBind(fn, ctx) {
   return fn.bind(ctx);
 }
 
-var bind = Function.prototype.bind ? nativeBind : polyfillBind;
+var bind$1 = Function.prototype.bind ? nativeBind : polyfillBind;
 
 /**
  * Convert an Array-like object to a real Array.
  */
-function toArray$1(list, start) {
+function toArray$2(list, start) {
   start = start || 0;
   var i = list.length - start;
   var ret = new Array(i);
@@ -604,7 +642,7 @@ function toArray$1(list, start) {
 /**
  * Mix properties into target object.
  */
-function extend$1(to, _from) {
+function extend$2(to, _from) {
   for (var _key in _from) {
     to[_key] = _from[_key];
   }
@@ -616,11 +654,11 @@ function extend$1(to, _from) {
  * Stubbing args to make Flow happy without leaving useless transpiled code
  * with ...rest (https://flow.org/blog/2017/05/07/Strict-Function-Call-Arity/)
  */
-function noop(a, b, c) {}
+function noop$1(a, b, c) {}
 
-var warn$2 = noop;
-var generateComponentTrace = noop; // work around flow check
-var formatComponentName = noop;
+var warn$2 = noop$1;
+var generateComponentTrace = noop$1; // work around flow check
+var formatComponentName = noop$1;
 
 {
   var classifyRE = /(?:^|[-_])(\w)/g;
@@ -815,7 +853,7 @@ function mergeAssets(parentVal, childVal, vm, key) {
   var res = Object.create(parentVal || null);
   if (childVal) {
     assertObjectType(key, childVal, vm);
-    return extend$1(res, childVal);
+    return extend$2(res, childVal);
   } else {
     return res;
   }
@@ -842,7 +880,7 @@ strats.watch = function (parentVal, childVal, vm, key) {
   }
   if (!parentVal) return childVal;
   var ret = {};
-  extend$1(ret, parentVal);
+  extend$2(ret, parentVal);
   for (var _key in childVal) {
     var parent = ret[_key];
     var child = childVal[_key];
@@ -863,8 +901,8 @@ strats.props = strats.methods = strats.inject = strats.computed = function (pare
   }
   if (!parentVal) return childVal;
   var ret = Object.create(null);
-  extend$1(ret, parentVal);
-  if (childVal) extend$1(ret, childVal);
+  extend$2(ret, parentVal);
+  if (childVal) extend$2(ret, childVal);
   return ret;
 };
 strats.provide = mergeDataOrFn;
@@ -892,17 +930,17 @@ function normalizeProps(options, vm) {
     while (i--) {
       val = props[i];
       if (typeof val === 'string') {
-        name = camelize(val);
+        name = camelize$1(val);
         res[name] = { type: null };
       } else {
         warn$2('props must be strings when using array syntax.');
       }
     }
-  } else if (isPlainObject$1(props)) {
+  } else if (isPlainObject$2(props)) {
     for (var key in props) {
       val = props[key];
-      name = camelize(key);
-      res[name] = isPlainObject$1(val) ? val : { type: val };
+      name = camelize$1(key);
+      res[name] = isPlainObject$2(val) ? val : { type: val };
     }
   } else {
     warn$2('Invalid value for option "props": expected an Array or an Object, ' + ('but got ' + toRawType$1(props) + '.'), vm);
@@ -921,10 +959,10 @@ function normalizeInject(options, vm) {
     for (var i = 0; i < inject.length; i++) {
       normalized[inject[i]] = { from: inject[i] };
     }
-  } else if (isPlainObject$1(inject)) {
+  } else if (isPlainObject$2(inject)) {
     for (var key in inject) {
       var val = inject[key];
-      normalized[key] = isPlainObject$1(val) ? extend$1({ from: key }, val) : { from: val };
+      normalized[key] = isPlainObject$2(val) ? extend$2({ from: key }, val) : { from: val };
     }
   } else {
     warn$2('Invalid value for option "inject": expected an Array or an Object, ' + ('but got ' + toRawType$1(inject) + '.'), vm);
@@ -947,7 +985,7 @@ function normalizeDirectives(options) {
 }
 
 function assertObjectType(name, value, vm) {
-  if (!isPlainObject$1(value)) {
+  if (!isPlainObject$2(value)) {
     warn$2('Invalid value for option "' + name + '": expected an Object, ' + ('but got ' + toRawType$1(value) + '.'), vm);
   }
 }
@@ -983,7 +1021,7 @@ function mergeOptions(parent, child, vm) {
     mergeField(key);
   }
   for (key in child) {
-    if (!hasOwn(parent, key)) {
+    if (!hasOwn$1(parent, key)) {
       mergeField(key);
     }
   }
@@ -1754,8 +1792,7 @@ function handleProxy(event) {
     set(this, model, event.detail.value);
   }
   if (this[method]) {
-    var payload = detail && Object.keys(detail).length > 0 && detail['__emit'] ? detail : event;
-    delete payload['__emit'];
+    var payload = detail && Object.keys(detail).length > 0 && detail['__emit'] ? detail.detail : event;
     var args = attr.length > 0 ? attr.map(function (v) {
       return v == '$event' ? payload : v;
     }) : [payload];
@@ -1821,6 +1858,12 @@ var TuaComp = function TuaComp(_ref) {
       checkReservedKeys(data, computed, methods);
 
       // 初始化数据
+      // 去除掉undefined的值
+      data && Object.keys(data).forEach(function (key) {
+        if (data[key] == undefined) {
+          delete data[key];
+        }
+      });
       this.setData(data);
 
       // 遍历递归观察 data
@@ -1897,6 +1940,12 @@ var TuaPage = function TuaPage(_ref) {
       checkReservedKeys(data, computed, methods);
 
       // 初始化数据
+      // 去除掉undefined的值
+      data && Object.keys(data).forEach(function (key) {
+        if (data[key] == undefined) {
+          delete data[key];
+        }
+      });
       this.setData(data);
 
       // 遍历递归观察 data
@@ -1977,7 +2026,7 @@ function initUse(Vue) {
     }
 
     // additional parameters
-    var args = toArray$1(arguments, 1);
+    var args = toArray$2(arguments, 1);
     args.unshift(this);
     if (typeof plugin.install === 'function') {
       plugin.install.apply(plugin, args);
