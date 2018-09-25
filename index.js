@@ -1,3 +1,4 @@
+import camelcase from 'camelcase';
 import set from 'lodash.set';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -99,32 +100,15 @@ var isBuiltInTag = makeMap('slot,component', true);
 var isReservedAttribute = makeMap('key,ref,slot,is');
 
 /**
- * Create a cached version of a pure function.
- */
-function cached(fn) {
-    var cache = Object.create(null);
-    return function cachedFn(str) {
-        var hit = cache[str];
-        return hit || (cache[str] = fn(str));
-    };
-}
-
-/**
- * Hyphenate a camelCase string.
- */
-var hyphenateRE = /([^-])([A-Z])/g;
-var hyphenate = cached(function (str) {
-    return str.replace(hyphenateRE, '$1-$2').replace(hyphenateRE, '$1-$2').toLowerCase();
-});
-
-/**
  * 封装小程序原生的 triggerEvent 方法，
  * @param {String} eventName 自定义事件名称
  * @param {Event} event 小程序原生事件
  * @param {Object} options 小程序原生触发事件的选项
  */
 var $emit = function $emit(eventName, detail, options) {
-  this.triggerEvent(hyphenate(eventName), {
+  // console.log('emit --- > ', eventName, camelcase(eventName), detail)
+  // 小程序中triggerEvent 名称'foo-bar' 需转换为 'fooBar'才能正常触发
+  this.triggerEvent(camelcase(eventName), {
     __emit: true,
     detail: detail
   }, options);
@@ -1087,7 +1071,7 @@ function initMixin(Vue) {
 
     vm.options = options;
 
-    console.log('return mergeOptions options -- > ', options);
+    // console.log('return mergeOptions options -- > ', options);
   };
 }
 
@@ -1785,20 +1769,23 @@ function handleProxy(event) {
 
   var method = dataset[type];
   var model = dataset['model'];
+  var modelEvent = dataset['modelEvent'];
   var attr = dataset[type + 'Attr'] || [];
-
-  if (model && type == 'input' || type == 'change' || type == 'blur') {
+  // console.log('handleProxy event -- > ', event, 'method: ', method, 'attr: ', attr)
+  if (model && type === modelEvent) {
     // TODO 对于列表循环、计算属性不支持
     set(this, model, event.detail.value);
   }
-  if (this[method]) {
-    var payload = detail && Object.keys(detail).length > 0 && detail['__emit'] ? detail.detail : event;
-    var args = attr.length > 0 ? attr.map(function (v) {
-      return v == '$event' ? payload : v;
-    }) : [payload];
-    this[method].apply(this, args);
-  } else {
-    warn$1('does not have a method "' + method + '"');
+  if (method) {
+    if (this[method]) {
+      var payload = detail && Object.keys(detail).length > 0 && detail['__emit'] ? detail.detail : event;
+      var args = attr.length > 0 ? attr.map(function (v) {
+        return v == '$event' ? payload : v;
+      }) : [payload];
+      this[method].apply(this, args);
+    } else {
+      warn$1('does not have a method "' + method + '"');
+    }
   }
 }
 
