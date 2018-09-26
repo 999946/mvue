@@ -855,8 +855,8 @@ ASSET_TYPES.forEach(function (type) {
  */
 strats.watch = function (parentVal, childVal, vm, key) {
   // work around Firefox's Object.prototype.watch...
-  if (parentVal === nativeWatch) parentVal = undefined;
-  if (childVal === nativeWatch) childVal = undefined;
+  // if (parentVal === nativeWatch) parentVal = undefined
+  // if (childVal === nativeWatch) childVal = undefined
   /* istanbul ignore if */
   if (!childVal) return Object.create(parentVal || null);
   {
@@ -1249,7 +1249,6 @@ var VmStatus = function () {
                 var setData = vm.__setData__ ? vm.__setData__ : vm.setData;
 
                 vm.beforeUpdate && vm.beforeUpdate();
-
                 // 更新数据
                 vm.updated ? setData.call(vm, newState, vm.updated) : setData.call(vm, newState);
 
